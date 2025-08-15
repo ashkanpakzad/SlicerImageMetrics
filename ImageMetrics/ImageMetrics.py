@@ -206,14 +206,15 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.contrastWidget.tableWidget().setVisible(False)
 
         # Create generic parameter change handlers
-        self.onInputChanged = lambda node: self.onParameterChanged('inputVolume', node)
+        # self.onInputChanged = lambda node: self.onParameterChanged('inputVolume', node)
         self.onAnnotationChanged = lambda node: self.onParameterChanged('annotation', node)
         self.onContrastChanged = lambda node: self.onParameterChanged('contrast', node)
         self.onTableChanged = lambda node: self.onParameterChanged('table', node)
         
         # Connect the handlers
-        self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputChanged)
+        # self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onInputChanged)
         self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self._onMarkupChange)
+        self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self._checkCanApply)
         self.ui.annotationWidget.markupsSelectorComboBox().connect("currentNodeChanged(vtkMRMLNode*)", self.onAnnotationChanged)
         self.ui.annotationWidget.markupsSelectorComboBox().connect("currentNodeChanged(vtkMRMLNode*)", self._onMarkupChange)
         self.ui.annotationWidget.connect("updateFinished()", self._onMarkupChange)
@@ -261,7 +262,7 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self._parameterNodeGuiTag = None
             self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self._checkCanApply)
             # TODO check if need
-            self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.onMarkupChange)
+            # self.removeObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self.onMarkupChange)
 
     def onSceneStartClose(self, caller, event) -> None:
         """Called just before the scene is closed."""
@@ -303,8 +304,8 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self._parameterNodeGuiTag = self._parameterNode.connectGui(self.ui)
             self.addObserver(self._parameterNode, vtk.vtkCommand.ModifiedEvent, self._checkCanApply)
             self._checkCanApply()
-            # GUI default is registered
-            self.onAnnotationChanged(self.ui.annotationWidget.markupsSelectorComboBox().currentNode())
+            # TODO: check this: GUI default is registered
+            # self.onAnnotationChanged(self.ui.annotationWidget.markupsSelectorComboBox().currentNode())
 
     def _onMarkupChange(self,  caller=None, event=None):
         '''If annotation is changed, update live textbox'''
