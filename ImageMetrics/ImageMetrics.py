@@ -53,14 +53,71 @@ class ImageMetrics(ScriptedLoadableModule):
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "Quantification")]
         self.parent.dependencies = []
         self.parent.contributors = ["Ashkan Pakzad (University of Melbourne)"]  
-        # TODO: update with short description of the module and a link to online module documentation
+        # update with short description of the module and a link to online module documentation
         # _() function marks text as translatable to other languages
-        self.parent.helpText = _("""Measure reference-less image quality metrics such as signal-to-noise ratio, contrast and resolution. 
-                                 https://github.com/ashkanpakzad/SlicerImageMetrics""")
-        # TODO: replace with organization, grant and thanks
-        self.parent.acknowledgementText = _("""Developed by Ashkan Pakzad (ashkanpakzad.github.io), University of Melbourne (ashkan.pakzad@unimelb.edu.au). 
+        self.parent.helpText = _("""
+<p>Measure reference-less image quality metrics such as signal-to-noise ratio, contrast and resolution.</p>
+<p><a href="https://github.com/ashkanpakzad/SlicerImageMetrics">https://github.com/ashkanpakzad/SlicerImageMetrics</a></p>
+
+<p>This module provides tools for measuring image quality metrics without requiring a reference image:</p>
+
+<ul>
+<li><strong>Signal-to-noise ratio (SNR):</strong> The ratio between signal intensity and background noise.
+    <ul>
+    <li>This can be measured by analysing a uniform area of the image.</li>
+    <li>It is computed as the ratio of the mean signal intensity to the standard deviation of the background noise.</li>
+    <li>Higher is better.</li>
+    </ul>
+</li>
+
+<li><strong>Spatial resolution:</strong> The size of the smallest distinguishable feature in an image.
+    <ul>
+    <li>This can be measured by analysing the fourier transform (spatial frequency) of a uniform area of an image.</li>
+    <li>The point spread function (PSF) describes how a 'point source' of light/signal is blurred in the imaging system.</li>
+    <li>It is computed by analyzing the spread of high-frequency components in the Fourier domain, where a smaller spread indicates better (smaller) resolution.</li>
+    <li>Lower is better.</li>
+    </ul>
+</li>
+
+<li><strong>Visibility:</strong> (Michelson contrast) Quantifies the difference in visibility between two tissue/material types.
+    <ul>
+    <li>This can be measured by analysing an area across a tissue interface in an image.</li>
+    <li>The visibility is a measure of how well the two tissues can be distinguished from each other.</li>
+    <li>It is computed by the difference in average 'low' and 'high' intensity values of the two tissues normalised by their summation.</li>
+    <li>Higher is better.</li>
+    </ul>
+</li>
+
+<li><strong>Contrast-to-noise ratio (CNR):</strong> A combined measure of visibility and SNR.
+    <ul>
+    <li>It is computed as the visibility across a tissue interface in a ratio with the standard deviation of the background noise.</li>
+    <li>Higher is better.</li>
+    </ul>
+</li>
+</ul>
+
+<p><strong>Notes:</strong></p>
+<ul>
+<li>For computing resolution, the 'background' annotation plane is symmetrically trimmed down to the nearest power of 2 in each dimension. (e.g. 100x100 -> 64x64)</li>
+<li>For computing visibility, the 'contrast' annotation plane is averaged in its shorter axis to produce a 1D profile.
+    <ul>
+    <li>Therefore the shorter axis should be parallel to the tissue interface and the longer axis should be perpendicular to it.</li>
+    <li>There should be an equal number of pixels in each tissue.</li>
+    <li>Currently, only horizontal and vertical interfaces are supported.</li>
+    </ul>
+</li>
+</ul>
+                                 """)
+        # replace with organization, grant and thanks
+        self.parent.acknowledgementText = _("""
+                                            <p>Developed by Ashkan Pakzad (<a href="https://ashkanpakzad.github.io">ashkanpakzad.github.io</a>), University of Melbourne (ashkan.pakzad@unimelb.edu.au). 
                                             Enabled by funding from the National Health and Medical Research Council [2021/GNT2011204]
-                                            https://impact-mi.sydney.edu.au/ """)
+                                            <a href="https://impact-mi.sydney.edu.au/">https://impact-mi.sydney.edu.au/</a></p>
+                                            <p><br></p>
+                                            <p>With reference to:
+                                            T. E. Gureyev et al., "Toolbox for advanced x-ray image processing", Proc. SPIE 8141, Advances in 
+                                            Computational Methods for X-Ray Optics II, 81410B (2011); <a href="https://doi.org/10.1117/12.893252">https://doi.org/10.1117/12.893252</a></p>
+                                            """)
 
         # Additional initialization step after application startup is complete
         # slicer.app.connect("startupCompleted()", registerSampleData)

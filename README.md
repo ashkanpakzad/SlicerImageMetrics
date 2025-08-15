@@ -31,7 +31,7 @@ Further details can be found in the Help/Acknowledgements section of the module 
 # Developers
 
 This module is written in Python and uses the [3D Slicer](https://www.slicer.org/) API.
-The code is available on [GitHub](https://github.com/ashkanpakzad/SlicerImageMetrics).
+Source code is available on [GitHub](https://github.com/ashkanpakzad/SlicerImageMetrics).
 Testing is done using [Slicer Self Tests](https://slicer.readthedocs.io/en/latest/developer_guide/modules/selftests.html).
 
 # License
@@ -40,6 +40,5 @@ This module is licensed under the Apache License 2.0. See [LICENSE](LICENSE) fil
 
 # Acknowledgments
 
-Developed by Ashkan Pakzad (ashkanpakzad.github.io), University of Melbourne (ashkan.pakzad@unimelb.edu.au). 
 Enabled by funding from the National Health and Medical Research Council [2021/GNT2011204]
 https://impact-mi.sydney.edu.au/ 
