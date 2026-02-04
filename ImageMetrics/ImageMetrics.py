@@ -79,7 +79,7 @@ class ImageMetrics(ScriptedLoadableModule):
     <li>The point spread function (PSF) describes how a 'point source' of light/signal is blurred in the imaging system.</li>
     <li>It is computed by analyzing the spread of high-frequency components in the Fourier domain, where a larger spread indicates better (smaller) resolution.</li>
     <li>The resolution is computed for both the x and y axes individually and also in 2D.</li>
-    <li>It is scaled to mm by multiplying by the spacing of the image.</li>
+    <li>It is reported in units of pixels. (To convert to mm, multiply by the spacing of the image.)</li>
     <li>Range is [0, inf].</li>
     <li>Lower is better.</li>
     </ul>
@@ -762,10 +762,10 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         # convert spacings to mm and store
         logger.debug(f"In pixels, resX: {rDx0}, resY: {rDy0}, res2D: {rD0}, res2D_L2: {rD02}\n Spacing: {spacings2}\n In mm, resX: {rDx0 * spacings2[0]}, resY: {rDy0 * spacings2[1]}, res2D: {rD0 * np.sqrt(spacings2[0] * spacings2[1])}, res2D_L2: {rD02 * np.sqrt(spacings2[0] * spacings2[1])}")
         result = {
-            'resX': rDx0 * spacings2[0],
-            'resY': rDy0 * spacings2[1],
-            'res2D': rD0 * np.sqrt(spacings2[0] * spacings2[1]),
-            'res2D_L2': rD02 * np.sqrt(spacings2[0] * spacings2[1]),
+            'resX': rDx0,
+            'resY': rDy0,
+            'res2D': rD0,
+            'res2D_L2': rD02,
             'fit_x': fit_x,
             'fit_y': fit_y,
         }
