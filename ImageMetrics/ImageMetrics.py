@@ -277,8 +277,12 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
         # connect live update
         self.ui.liveBox.connect("toggled(bool)", self.onLiveChanged)
-        self.ui.liveText.connect("textChanged(const QString&)", self._onLiveUpdate)
-        self.ui.liveCText.connect("textChanged(const QString&)", self._onLiveUpdate)
+        # Debounce live updates to avoid lag while interactively moving the plane.
+        # (Markups widgets can emit frequent updates during drag; we only compute after a short pause.)
+        self._liveUpdateTimer = qt.QTimer()
+        self._liveUpdateTimer.setSingleShot(True)
+        self._liveUpdateTimer.setInterval(250)  # ms; adjust for responsiveness vs. compute load
+        self._liveUpdateTimer.connect("timeout()", self._onLiveUpdate)
 
         # Make sure parameter node is initialized (needed for module reload)
         self.initializeParameterNode()
@@ -348,6 +352,17 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     def _onMarkupChange(self,  caller=None, event=None):
         '''If annotation is changed, update live textbox'''
         if self._parameterNode and self._parameterNode.inputVolume and self._parameterNode.annotation and self.ui.liveBox.isChecked():
+            self._scheduleLiveUpdate()
+
+    def _scheduleLiveUpdate(self) -> None:
+        """Schedule a (debounced) live update if live mode is enabled."""
+        if not self.ui.liveBox.isChecked():
+            return
+        # Reset the timer so rapid interactive updates (e.g., dragging plane) only trigger one compute after pause.
+        if hasattr(self, "_liveUpdateTimer") and self._liveUpdateTimer:
+            self._liveUpdateTimer.stop()
+            self._liveUpdateTimer.start()
+        else:
             self._onLiveUpdate()
 
     def _onLiveUpdate(self):
@@ -450,9 +465,14 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         if value:
             print("LIVE MODE ENABLED - Check ImageMetrics widget for results")
             slicer.util.showStatusMessage("ImageMetrics: Live mode enabled", 3000)
+            # Kick off an initial update (debounced) so the widget populates immediately.
+            self._scheduleLiveUpdate()
         else:
             print("LIVE MODE DISABLED")
             slicer.util.showStatusMessage("ImageMetrics: Live mode disabled", 3000)
+            # Stop any queued update.
+            if hasattr(self, "_liveUpdateTimer") and self._liveUpdateTimer:
+                self._liveUpdateTimer.stop()
 
     def onShowTable(self, value):
         # Change layout to Four-up Table View
@@ -668,11 +688,10 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         logger.debug(f"bin means: {lower_mean}, {upper_mean}")
         if lower_mean < 0 and upper_mean > 0:
             visibility = np.nan
-            logger.info("Visibility cannot be calculated, because the lower bin mean is negative and the upper bin mean is positive")
+            print(lower_mean, upper_mean)
         elif lower_mean == 0 and upper_mean == 0:
             visibility = 0.0
-            logger.info("Visibility is zero, because the lower and upper bin means are zero")
-        else:
+        else:   
             visibility = (upper_mean - lower_mean) / (upper_mean + lower_mean)
         logger.debug(f"visibility: {visibility}")
         return visibility, bin_edges
