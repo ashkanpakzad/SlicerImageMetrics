@@ -177,8 +177,8 @@
        </widget>
       </item>
       <item row="8" column="0" colspan="2">
-       <layout class="QFormLayout" name="formLayout_4">
-        <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
          <widget class="QCheckBox" name="debugBox">
           <property name="toolTip">
            <string>Extra logs in console</string>
@@ -188,13 +188,26 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item>
          <widget class="QCheckBox" name="liveBox">
           <property name="text">
            <string>Show live</string>
           </property>
           <property name="checked">
            <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="showTableButton">
+          <property name="toolTip">
+           <string>Set layout to Four-Up Table to show table</string>
+          </property>
+          <property name="text">
+           <string>Table Layout</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
           </property>
          </widget>
         </item>

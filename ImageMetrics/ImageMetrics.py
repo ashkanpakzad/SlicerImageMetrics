@@ -272,6 +272,9 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         # debug checkbox
         self.ui.debugBox.connect("toggled(bool)", self.onDebugChanged)
 
+        # table layout button
+        self.ui.showTableButton.connect("clicked(bool)", self.onShowTable)
+
         # connect live update
         self.ui.liveBox.connect("toggled(bool)", self.onLiveChanged)
         self.ui.liveText.connect("textChanged(const QString&)", self._onLiveUpdate)
@@ -450,6 +453,14 @@ class ImageMetricsWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         else:
             print("LIVE MODE DISABLED")
             slicer.util.showStatusMessage("ImageMetrics: Live mode disabled", 3000)
+
+    def onShowTable(self, value):
+        # Change layout to Four-up Table View
+        slicer.app.layoutManager().setLayout(slicer.vtkMRMLLayoutNode.SlicerLayoutFourUpTableView)
+        # Show the currently selected table node in the table view
+        if self.ui.TableSelector.currentNode():
+            slicer.app.applicationLogic().GetSelectionNode().SetReferenceActiveTableID(self.ui.TableSelector.currentNode().GetID())
+            slicer.app.applicationLogic().PropagateTableSelection()
 
 
 #
