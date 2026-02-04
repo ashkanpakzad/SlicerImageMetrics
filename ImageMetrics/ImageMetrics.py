@@ -1006,6 +1006,13 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         slicer.util.setSliceViewerLayers(background=self.testVolume1, fit=True, rotateToVolumePlane=True)
         self.delayDisplay("Generated test volume with gaussian noise: mean=100, std=20")
 
+        # create a test volume, vertically split into two levels, add same noise
+        split_noise = noise.copy()
+        split_noise[:, :, :128] += 100 # add 100 to right half
+        self.testVolume2 = slicer.util.addVolumeFromArray(split_noise.astype(np.float32), name="TestVolume2")
+        slicer.util.setSliceViewerLayers(background=self.testVolume2, fit=True, rotateToVolumePlane=True)
+        self.delayDisplay("Generated test volume with gaussian noise: mean=100, std=20, split vertically into two levels")
+
         # create a plane measurement in center of test volume
         self.testPlane1 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsPlaneNode")
         self.testPlane1.SetName("testPlane")
@@ -1015,6 +1022,24 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         self.testPlane1.SetSize(86, 86)
         self.delayDisplay("Created test plane node in center of test volume")
 
+        # create a test plane, off center
+        self.testPlane2 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsPlaneNode")
+        self.testPlane2.SetName("testPlane2")
+        self.testPlane2.SetPlaneType(slicer.vtkMRMLMarkupsPlaneNode.PlaneTypePointNormal)
+        self.testPlane2.SetCenter(128+43, 128, 128)
+        self.testPlane2.SetNormal(0, 0, 1)
+        self.testPlane2.SetSize(86, 86)
+        self.delayDisplay("Created test plane node offset from center of test volume")
+
+        # create a contrast plane in center of test volume
+        self.testPlane3 = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsPlaneNode")
+        self.testPlane3.SetName("testPlane3")
+        self.testPlane3.SetPlaneType(slicer.vtkMRMLMarkupsPlaneNode.PlaneTypePointNormal)
+        self.testPlane3.SetCenter(128, 128, 128)
+        self.testPlane3.SetNormal(0, 0, 1)
+        self.testPlane3.SetSize(86, 80) # needs to be asymmetric 
+        self.delayDisplay("Created test contrast plane node in center of test volume")
+
     def runTest(self):
         """Run as few or as many tests as needed here."""
         self.setUp()
@@ -1022,7 +1047,7 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         # basic logic process
         self.test_ImageMetricsBasic()
         self.test_ImageMetricsTable()
-        # TODO: self.test_ImageMetricsContrast() - contrast measurement with two planes
+        self.test_ImageMetricsContrast()
 
         # different volume cases
         # TODO: self.test_ImageMetricsNonFloat() - non-float volume
@@ -1063,6 +1088,13 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         # Check SNR is approximately 5 (within 20% since noise is random)
         self.assertGreater(row['SNR'], 4.0)
         self.assertLess(row['SNR'], 6.0)
+
+        try:
+            self.delayDisplay("Test_ImageMetricsBasic passed")
+            print("Test_ImageMetricsBasic PASSED")
+        except Exception as e:
+            print("Test_ImageMetricsBasic FAILED")
+            raise  # Re-raise so the test still properly fails
         self.delayDisplay("Test_ImageMetricsBasic passed")
 
     def test_ImageMetricsTable(self):
@@ -1086,51 +1118,36 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         self.assertEqual(tableNode.GetCellText(0, tableNode.GetColumnIndex("volume")), str(row["volume"]))
         self.assertEqual(tableNode.GetCellText(0, tableNode.GetColumnIndex("shape")), str(row["shape"]))
         
+        try:
+            self.delayDisplay("Test_ImageMetricsTable passed")
+            print("Test_ImageMetricsTable PASSED")
+        except Exception as e:
+            print("Test_ImageMetricsTable FAILED")
+            raise  # Re-raise so the test still properly fails
         self.delayDisplay("Test_ImageMetricsTable passed")
 
-    def test_ImageMetrics1(self):
-        """Ideally you should have several levels of tests.  At the lowest level
-        tests should exercise the functionality of the logic with different inputs
-        (both valid and invalid).  At higher levels your tests should emulate the
-        way the user would interact with your code and confirm that it still works
-        the way you intended.
-        One of the most important features of the tests is that it should alert other
-        developers when their changes will have an impact on the behavior of your
-        module.  For example, if a developer removes a feature that you depend on,
-        your test should break so they know that the feature is needed.
-        """
-
-        self.delayDisplay("Starting the test")
-
-        # Get/create input data
-
-        import SampleData
-
-        registerSampleData()
-        inputVolume = SampleData.downloadSample("ImageMetrics1")
-        self.delayDisplay("Loaded test data set")
-
-        inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(inputScalarRange[0], 0)
-        self.assertEqual(inputScalarRange[1], 695)
-
-        outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-        threshold = 100
-
-        # Test the module logic
-
+    def test_ImageMetricsContrast(self):
+        '''Run ImageMetrics with contrast plane'''
         logic = ImageMetricsLogic()
+        row = logic.process(self.testVolume2, self.testPlane2, self.testPlane3)
+        
+        # Deterministic checks
+        self.assertEqual(row['shape'], (86+1, 86+1)) # patch is inclusive of edges
+        self.assertEqual(row['cShape'], (86+1, 80+1)) # contrast patch is inclusive of edges
+        
+        # Stochastic checks
+        # Check visibility is approximately 0.33 (mean lower and upper bins are 100 and 200)
+        self.assertGreater(row['visibility'], 0.3)
+        self.assertLess(row['visibility'], 0.35)
+        # SNR is approximately 5; CNR = visibility * SNR is approximately 1.65
+        self.assertGreater(row['CNR'], 1.5)
+        self.assertLess(row['CNR'], 1.75)
 
-        # Test algorithm with non-inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, True)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], threshold)
+        try:
+            self.delayDisplay("Test_ImageMetricsContrast passed")
+            print("Test_ImageMetricsContrast PASSED")
+        except Exception as e:
+            print("Test_ImageMetricsContrast FAILED")
+            raise  # Re-raise so the test still properly fails
+        self.delayDisplay("Test_ImageMetricsContrast passed")
 
-        # Test algorithm with inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, False)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], inputScalarRange[1])
-
-        self.delayDisplay("Test passed")
