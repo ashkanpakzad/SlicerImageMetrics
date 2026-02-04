@@ -999,7 +999,9 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         
         # Generate random noise volume
         imageSize = [256, 256, 256]
-        noise = np.random.normal(loc=100, scale=20, size=imageSize)
+        # Use a fixed seed to make the test deterministic/reproducible.
+        rng = np.random.default_rng(0)
+        noise = rng.normal(loc=100, scale=20, size=imageSize)
         self.testVolume1 = slicer.util.addVolumeFromArray(noise.astype(np.float32), name="TestVolume")
         slicer.util.setSliceViewerLayers(background=self.testVolume1, fit=True, rotateToVolumePlane=True)
         self.delayDisplay("Generated test volume with gaussian noise: mean=100, std=20")
@@ -1019,7 +1021,7 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
 
         # basic logic process
         self.test_ImageMetricsBasic()
-        # TODO: self.test_ImageMetricsTable() - table output functionality
+        self.test_ImageMetricsTable()
         # TODO: self.test_ImageMetricsContrast() - contrast measurement with two planes
 
         # different volume cases
@@ -1062,6 +1064,29 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         self.assertGreater(row['SNR'], 4.0)
         self.assertLess(row['SNR'], 6.0)
         self.delayDisplay("Test_ImageMetricsBasic passed")
+
+    def test_ImageMetricsTable(self):
+        '''Run ImageMetrics with table output'''
+        logic = ImageMetricsLogic()
+        tableNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTableNode")
+        tableNode.SetName("ImageMetricsTestTable")
+        row = logic.process(self.testVolume1, self.testPlane1, tableNode=tableNode)
+        
+        # Deterministic checks
+        self.assertEqual(row['shape'], (86+1, 86+1)) # patch is inclusive of edges
+
+        # Table output checks
+        # Ensure expected columns exist
+        for requiredCol in ["volume", "shape", "mean", "std", "SNR"]:
+            self.assertNotEqual(tableNode.GetColumnIndex(requiredCol), -1)
+
+        # Ensure at least one row was written and key values match
+        vtkTable = tableNode.GetTable()
+        self.assertGreaterEqual(vtkTable.GetNumberOfRows(), 1)
+        self.assertEqual(tableNode.GetCellText(0, tableNode.GetColumnIndex("volume")), str(row["volume"]))
+        self.assertEqual(tableNode.GetCellText(0, tableNode.GetColumnIndex("shape")), str(row["shape"]))
+        
+        self.delayDisplay("Test_ImageMetricsTable passed")
 
     def test_ImageMetrics1(self):
         """Ideally you should have several levels of tests.  At the lowest level
