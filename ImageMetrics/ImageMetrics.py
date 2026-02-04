@@ -1050,7 +1050,7 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         self.test_ImageMetricsContrast()
 
         # different volume cases
-        # TODO: self.test_ImageMetricsNonFloat() - non-float volume
+        self.test_ImageMetricsNonFloat()
 
         # different plane cases
         # TODO: self.test_ImageMetricsOutOfBounds() - behavior when plane is outside volume bounds
@@ -1095,7 +1095,6 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         except Exception as e:
             print("Test_ImageMetricsBasic FAILED")
             raise  # Re-raise so the test still properly fails
-        self.delayDisplay("Test_ImageMetricsBasic passed")
 
     def test_ImageMetricsTable(self):
         '''Run ImageMetrics with table output'''
@@ -1124,7 +1123,6 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         except Exception as e:
             print("Test_ImageMetricsTable FAILED")
             raise  # Re-raise so the test still properly fails
-        self.delayDisplay("Test_ImageMetricsTable passed")
 
     def test_ImageMetricsContrast(self):
         '''Run ImageMetrics with contrast plane'''
@@ -1149,5 +1147,37 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         except Exception as e:
             print("Test_ImageMetricsContrast FAILED")
             raise  # Re-raise so the test still properly fails
-        self.delayDisplay("Test_ImageMetricsContrast passed")
 
+    def test_ImageMetricsNonFloat(self):
+        '''Run ImageMetrics with non-float volume'''
+        logic = ImageMetricsLogic()
+
+        # Clone test volume and cast image data to signed int16 within Slicer using vtkImageCast
+        volumesLogic = slicer.modules.volumes.logic()
+        testVolume1_int16 = volumesLogic.CloneVolume(slicer.mrmlScene, self.testVolume1, "TestVolume1_int16")
+        image_data = slicer.util.arrayFromVolume(testVolume1_int16)
+        image_data = image_data.astype(np.int16)
+        slicer.util.updateVolumeFromArray(testVolume1_int16, image_data)
+        slicer.util.setSliceViewerLayers(background=testVolume1_int16, fit=True, rotateToVolumePlane=True)
+        self.delayDisplay("Cloned test volume to signed int16")
+
+        # run ImageMetrics
+        row = logic.process(testVolume1_int16, self.testPlane1)
+                
+        # Stochastic checks
+        # Check mean is approximately 100 (within 20% since noise is random)
+        self.assertGreater(row['mean'], 80.0)
+        self.assertLess(row['mean'], 120.0)
+        # check std is approximately 20 (within 20% since noise is random)
+        self.assertGreater(row['std'], 16.0)
+        self.assertLess(row['std'], 24.0)
+        # Check SNR is approximately 5 (within 20% since noise is random)
+        self.assertGreater(row['SNR'], 4.0)
+        self.assertLess(row['SNR'], 6.0)
+
+        try:
+            self.delayDisplay("Test_ImageMetricsNonFloat passed")
+            print("Test_ImageMetricsNonFloat PASSED")
+        except Exception as e:
+            print("Test_ImageMetricsNonFloat FAILED")
+            raise  # Re-raise so the test still properly fails
