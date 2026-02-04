@@ -536,8 +536,22 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         affine = self.getAffine(sourceNode)
         spacings = sourceNode.GetSpacing()
 
+        # get volume bounds in RAS coordinates
+        volumeBoundsRAS = [0.0] * 6
+        sourceNode.GetRASBounds(volumeBoundsRAS)
+        volumeBoundsRAS = np.array(volumeBoundsRAS).reshape(3,2).T
+        volumeBoundsRAS = np.concatenate([volumeBoundsRAS, np.ones((2, 1))], axis=1)
+
         # get patch IJK
         boundsRAS = self.getPointNormalPlaneBoundsRAS(annotationNode)
+        print(f"boundsRAS: {boundsRAS}")
+        print(f"volumeBoundsRAS: {volumeBoundsRAS}")
+
+        # check if patch is within bounds of source volume
+        if np.any(boundsRAS[0,:] < volumeBoundsRAS[0,:]) or np.any(boundsRAS[1,:] > volumeBoundsRAS[1,:]):
+            raise ValueError("Patch is outside volume bounds")
+        
+        # get patch in IJK coordinates
         patch, boundsIJK = self.getPatch(sourceNode, affine, boundsRAS)
         row.update({
             'I': boundsIJK[:,0],
