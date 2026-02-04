@@ -688,7 +688,6 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         logger.debug(f"bin means: {lower_mean}, {upper_mean}")
         if lower_mean < 0 and upper_mean > 0:
             visibility = np.nan
-            print(lower_mean, upper_mean)
         elif lower_mean == 0 and upper_mean == 0:
             visibility = 0.0
         else:   
