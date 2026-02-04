@@ -56,7 +56,7 @@ class ImageMetrics(ScriptedLoadableModule):
         # update with short description of the module and a link to online module documentation
         # _() function marks text as translatable to other languages
         self.parent.helpText = _("""
-<p>Measure reference-less image quality metrics such as signal-to-noise ratio, contrast and resolution.</p>
+<p>No-reference image quality assessment tool. Measure reference-less image quality metrics such as signal-to-noise ratio, contrast and resolution.</p>
 <p><a href="https://github.com/ashkanpakzad/SlicerImageMetrics">https://github.com/ashkanpakzad/SlicerImageMetrics</a></p>
 
 <p>This module provides tools for measuring image quality metrics without requiring a reference image:</p>
@@ -66,6 +66,7 @@ class ImageMetrics(ScriptedLoadableModule):
     <ul>
     <li>This can be measured by analysing a uniform area of the image.</li>
     <li>It is computed as the ratio of the mean signal intensity to the standard deviation of the background noise.</li>
+    <li>Range is [0, inf].</li>
     <li>Higher is better.</li>
     </ul>
 </li>
@@ -74,7 +75,10 @@ class ImageMetrics(ScriptedLoadableModule):
     <ul>
     <li>This can be measured by analysing the fourier transform (spatial frequency) of a uniform area of an image.</li>
     <li>The point spread function (PSF) describes how a 'point source' of light/signal is blurred in the imaging system.</li>
-    <li>It is computed by analyzing the spread of high-frequency components in the Fourier domain, where a smaller spread indicates better (smaller) resolution.</li>
+    <li>It is computed by analyzing the spread of high-frequency components in the Fourier domain, where a larger spread indicates better (smaller) resolution.</li>
+    <li>The resolution is computed for both the x and y axes individually and also in 2D.</li>
+    <li>It is scaled to mm by multiplying by the spacing of the image.</li>
+    <li>Range is [0, inf].</li>
     <li>Lower is better.</li>
     </ul>
 </li>
@@ -83,7 +87,9 @@ class ImageMetrics(ScriptedLoadableModule):
     <ul>
     <li>This can be measured by analysing an area across a tissue interface in an image.</li>
     <li>The visibility is a measure of how well the two tissues can be distinguished from each other.</li>
-    <li>It is computed by the difference in average 'low' and 'high' intensity values of the two tissues normalised by their summation.</li>
+    <li>It is computed by binning the contrast profile into 5 bins and taking the difference in mean 'low' and 'high' bins normalised by their summation.</li>
+    <li>If either the lower or upper bin mean is negative, the visibility is undefined. Output is set to NaN.</li>
+    <li>Range is [0, 1].</li>
     <li>Higher is better.</li>
     </ul>
 </li>
@@ -91,6 +97,9 @@ class ImageMetrics(ScriptedLoadableModule):
 <li><strong>Contrast-to-noise ratio (CNR):</strong> A combined measure of visibility and SNR.
     <ul>
     <li>It is computed as the visibility across a tissue interface in a ratio with the standard deviation of the background noise.</li>
+    <li>Equivalent to multiplying visibility by SNR.</li>
+    <li>Note that if visibility is undefined, CNR is also undefined.</li>
+    <li>Range is [0, inf].</li>
     <li>Higher is better.</li>
     </ul>
 </li>
