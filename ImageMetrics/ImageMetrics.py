@@ -59,7 +59,9 @@ class ImageMetrics(ScriptedLoadableModule):
 <p>No-reference image quality assessment tool. Measure reference-less image quality metrics such as signal-to-noise ratio, contrast and resolution.</p>
 <p><a href="https://github.com/ashkanpakzad/SlicerImageMetrics">https://github.com/ashkanpakzad/SlicerImageMetrics</a></p>
 
-<p>This module provides tools for measuring image quality metrics without requiring a reference image:</p>
+<p>This module provides tools for measuring image quality metrics without requiring a reference image.</p>
+
+<p><strong>Metrics:</strong></p>
 
 <ul>
 <li><strong>Signal-to-noise ratio (SNR):</strong> The ratio between signal intensity and background noise.
@@ -104,6 +106,36 @@ class ImageMetrics(ScriptedLoadableModule):
     </ul>
 </li>
 </ul>
+
+<p><strong>Usage:</strong></p>
+
+<ol>
+<li>Load a volume into Slicer (<i>e.g.</i> Slicer sample data "CTLiver").</li>
+<li>Open <b>Quantification &gt; Image Metrics</b> from the module menu.</li>
+<li>Create an <b>annotation plane</b> on a uniform area in the input volume (recommended size: &ge;64 &times; &ge;64).</li>
+<li><b>Optional:</b> Create a <b>contrast plane</b> across an area of interest (across an interface between two tissues).</li>
+<li>In the module:
+  <ul>
+    <li>Select the <b>input volume</b> to measure image quality.</li>
+    <li>Select the <b>annotation plane</b>.</li>
+    <li>Select the <b>contrast plane</b> (if created).</li>
+  </ul>
+</li>
+<li>Ensure the correct volume and planes are selected for your measurement.</li>
+<li>
+  <b>To compute metrics:</b>
+  <ul>
+    <li>Enable <b>live mode</b> to display results interactively inside the Slicer widget, <i>or</i></li>
+    <li>Click the <b>"Apply"</b> button to compute metrics and record the result to a table.</li>
+  </ul>
+</li>
+<li>
+  Multiple measurements can be made by repeating the plane selection and clicking <b>Apply</b>; each result will be recorded as a new row in the table.
+</li>
+<li>
+  The results table can be exported (e.g. as <code>.csv</code>) using Slicer's save functionality.
+</li>
+</ol>
 
 <p><strong>Notes:</strong></p>
 <ul>
