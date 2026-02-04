@@ -542,10 +542,8 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         volumeBoundsRAS = np.array(volumeBoundsRAS).reshape(3,2).T
         volumeBoundsRAS = np.concatenate([volumeBoundsRAS, np.ones((2, 1))], axis=1)
 
-        # get patch IJK
+        # get patch RAS bounds
         boundsRAS = self.getPointNormalPlaneBoundsRAS(annotationNode)
-        print(f"boundsRAS: {boundsRAS}")
-        print(f"volumeBoundsRAS: {volumeBoundsRAS}")
 
         # check if patch is within bounds of source volume
         if np.any(boundsRAS[0,:] < volumeBoundsRAS[0,:]) or np.any(boundsRAS[1,:] > volumeBoundsRAS[1,:]):
@@ -1067,7 +1065,7 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
         self.test_ImageMetricsNonFloat()
 
         # different plane cases
-        # TODO: self.test_ImageMetricsOutOfBounds() - behavior when plane is outside volume bounds
+        self.test_ImageMetricsOutOfBounds()
         # TODO: self.test_ImageMetricsNegativeValues() - negative intensity values
         # TODO: self.test_ImageMetricsEdgeCases() - behavior at volume boundaries
         # TODO: self.test_ImageMetricsEmptyPlane() - behavior with zero-sized plane
@@ -1194,4 +1192,29 @@ class ImageMetricsTest(ScriptedLoadableModuleTest):
             print("Test_ImageMetricsNonFloat PASSED")
         except Exception as e:
             print("Test_ImageMetricsNonFloat FAILED")
+            raise  # Re-raise so the test still properly fails
+
+
+    def test_ImageMetricsOutOfBounds(self):
+        '''Run ImageMetrics with plane outside volume bounds'''
+        logic = ImageMetricsLogic()
+
+        # create new plane node outside volume bounds
+        testPlane_outside = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsPlaneNode")
+        testPlane_outside.SetName("testPlane_outside")
+        testPlane_outside.SetPlaneType(slicer.vtkMRMLMarkupsPlaneNode.PlaneTypePointNormal)
+        testPlane_outside.SetCenter(256, 128, 128)
+        testPlane_outside.SetNormal(0, 0, 1)
+        testPlane_outside.SetSize(86, 86)
+        self.delayDisplay("Created test plane node that extendsoutside volume bounds")
+
+        # run ImageMetrics with plane outside volume bounds
+        with self.assertRaises(ValueError):
+            logic.process(self.testVolume1, testPlane_outside)
+
+        try:
+            self.delayDisplay("Test_ImageMetricsOutOfBounds passed")
+            print("Test_ImageMetricsOutOfBounds PASSED")
+        except Exception as e:
+            print("Test_ImageMetricsOutOfBounds FAILED")
             raise  # Re-raise so the test still properly fails
