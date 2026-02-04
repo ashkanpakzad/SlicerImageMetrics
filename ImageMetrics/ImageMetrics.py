@@ -556,6 +556,16 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
             
             # plot contrast profile
             self.plotVis(contrastProfile, bin_edges, labelWidget=plotLabel)
+        
+        else:
+            row.update({
+                'cShape': [None, None],
+                'cI': [None, None],
+                'cJ': [None, None],
+                'cK': [None, None],
+                'visibility': None,
+                'CNR': None,
+            })
 
         # update table
         if tableNode:
