@@ -571,7 +571,7 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         logger.debug("Computing patch statistics")
         if patch.size == 0:
             raise ValueError("Patch is empty")
-        SNR = float(np.mean(patch) / np.std(patch))
+        SNR = np.abs(float(np.mean(patch) / np.std(patch)))
         logger.debug(f"SNR calculated: {SNR:.3f}")
         # resolution using power spectrum
         res = self.computeResolution(patch.T, spacings2)
@@ -605,7 +605,7 @@ class ImageMetricsLogic(ScriptedLoadableModuleLogic):
         upper_mean = np.mean(bins[-1]) if len(bins[-1]) > 0 else 0
         logger.debug(f"bin means: {lower_mean}, {upper_mean}")
         if lower_mean < 0 and upper_mean > 0:
-            visibility = -1.0
+            visibility = np.nan
             logger.info("Visibility cannot be calculated, because the lower bin mean is negative and the upper bin mean is positive")
         elif lower_mean == 0 and upper_mean == 0:
             visibility = 0.0
